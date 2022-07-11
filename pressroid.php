@@ -1,21 +1,23 @@
 <?php
 /**
-	 * Plugin Name: My android application backend
-	 * Plugin URI: http://www.mywebsite.com/my-first-plugin
+	 * Plugin Name: pressroid wordpress plugin
+	 * Plugin URI: http://www.ehsankhormali.ir/perssroid_wordpress-plugin
 	 * Description: provide backend rest api for client application.
 	 * Version: 1.0
 	 * Author: Ehsan Khormali
-	 * Author URI: http://www.mywebsite.com
+	 * Author URI: http://www.ehsankhormali.ir
 	 */
 	 
+	 //get details of specific order endpoit
 	 add_action( 'rest_api_init', function () {
 	  register_rest_route( 'pressroid/v1', '/products/(?P<id>\d+)', array(
 		'methods' => 'GET',
-		'callback' => 'pr_get_product',
+		'callback' => 'get_product_detials',
 	  ) );
 	} );
 	
-	function ab_get_product($data) 
+	//get details of specific order
+	function get_product_detials($data) 
 	{
 		$myproduct = wc_get_product($data['id']);
 		$p=array(
@@ -32,4 +34,32 @@
 	exit();
 	}
 	 
+	 //get all products of specific endpoint
+	add_action( 'rest_api_init', function () {
+	  register_rest_route( 'pressroid/v1', '/orders/(?P<order_id>\d+)', array(
+		'methods' => 'GET',
+		'callback' => 'get_order_items',
+	  ) );
+	} );
+	
+	//get all products of specific order
+	 function get_order_items($data)
+	 {
+		$order=wc_get_order($data['order_id']);
+		$order_items=array();
+		foreach ( $order->get_items() as $item_id => $item ) {
+			$product=$item->get_product();
+			 $p=array(
+			'name'=>$product->get_name(),
+			'title'=>$product->get_title(),
+			'type'=>$product->get_type(),
+			'id'=>$product->get_id(),
+			'price'=>$product->get_price(),
+			'image_url'=>wp_get_attachment_url($product->get_image_id()), 
+			'description'=>$product->get_description()
+			);
+			array_push($order_items,$p);
+		}
+		echo json_encode($order_items,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS);
+	 }
 	 ?>
